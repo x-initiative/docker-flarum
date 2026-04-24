@@ -58,9 +58,9 @@ RUN mkdir -p /opt/flarum \
   && COMPOSER_CACHE_DIR="/tmp" composer create-project flarum/flarum /opt/flarum --no-install --no-audit \
   && composer config --working-dir /opt/flarum audit.block-insecure false \
   && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload --no-audit \
-  && find /opt/flarum/vendor/flarum/core -name "*woff2*" \
+  && find /opt/flarum/vendor -name "*.woff2" \
   && mkdir -p /opt/flarum/public/assets/fonts \
-  && find /opt/flarum/vendor/fortawesome/font-awesome -name "*.woff2" -exec cp {} /opt/flarum/public/assets/fonts/ \; \
+  && find /opt/flarum/vendor -name "*.woff2" -exec cp {} /opt/flarum/public/assets/fonts/ \; \
   && ls -R /opt/flarum/public/assets \
   && cp -a /opt/flarum/public/assets /opt/flarum/public/assets.bak \
   && composer clear-cache \
