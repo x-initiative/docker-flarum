@@ -1,0 +1,12 @@
+{
+  "apps": [
+    {
+      "app_id": "app_27dc92ff-1f5f-4bf7-aabd-103467dbd444",
+      "org_id": "orga_92c09560-c461-4665-a3ae-d222e72d5855",
+      "deploy_url": "https://github.com/x-initiative/docker-flarum.git",
+      "git_ssh_url": "https://github.com/x-initiative/docker-flarum.git",
+      "name": "forum",
+      "alias": "forum"
+    }
+  ]
+}
