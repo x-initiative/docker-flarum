@@ -66,7 +66,7 @@ RUN mkdir -p /opt/flarum \
 
 COPY rootfs /
 
-EXPOSE 8000
+EXPOSE 8080
 WORKDIR /opt/flarum
 VOLUME [ "/data" ]
 
