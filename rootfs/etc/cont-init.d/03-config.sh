@@ -109,6 +109,11 @@ echo "Initializing files and folders..."
 # fixperms /data/assets /data/extensions /data/storage /opt/flarum/vendor
 
 mkdir -p /opt/flarum/public/assets /opt/flarum/storage /opt/flarum/extensions
+# Restore assets from backup if directory is empty (happens if volume mount or script wiped it)
+if [ ! -f "/opt/flarum/public/assets/fonts/fa-solid-900.woff2" ]; then
+  echo "Restoring assets from backup..."
+  cp -a /opt/flarum/public/assets.bak/* /opt/flarum/public/assets/ 2>/dev/null || true
+fi
 fixperms /opt/flarum/public/assets /opt/flarum/storage /opt/flarum/extensions /opt/flarum/vendor
 
 echo "Checking parameters..."

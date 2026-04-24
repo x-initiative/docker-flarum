@@ -58,6 +58,7 @@ RUN mkdir -p /opt/flarum \
   && COMPOSER_CACHE_DIR="/tmp" composer create-project flarum/flarum /opt/flarum --no-install --no-audit \
   && composer config --working-dir /opt/flarum audit.block-insecure false \
   && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload --no-audit \
+  && cp -a /opt/flarum/public/assets /opt/flarum/public/assets.bak \
   && composer clear-cache \
   && addgroup -g ${PGID} flarum \
   && adduser -D -h /opt/flarum -u ${PUID} -G flarum -s /bin/sh -D flarum \
