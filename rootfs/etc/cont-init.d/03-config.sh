@@ -97,16 +97,19 @@ if [ "$LISTEN_IPV6" != "true" ]; then
 fi
 
 echo "Initializing files and folders..."
-mkdir -p /data/assets /data/extensions/.cache /data/storage
-touch /data/extensions/list
-cp -Rf /opt/flarum/public/assets /data
-cp -Rf /opt/flarum/storage /data
-rm -rf /opt/flarum/extensions /opt/flarum/public/assets /opt/flarum/storage
-ln -sf /data/assets /opt/flarum/public/assets
-ln -sf /data/extensions /opt/flarum/extensions
-ln -sf /data/storage /opt/flarum/storage
-chown -h flarum:flarum /opt/flarum/extensions /opt/flarum/public/assets /opt/flarum/storage
-fixperms /data/assets /data/extensions /data/storage /opt/flarum/vendor
+# mkdir -p /data/assets /data/extensions/.cache /data/storage
+# touch /data/extensions/list
+# cp -Rf /opt/flarum/public/assets /data
+# cp -Rf /opt/flarum/storage /data
+# rm -rf /opt/flarum/extensions /opt/flarum/public/assets /opt/flarum/storage
+# ln -sf /data/assets /opt/flarum/public/assets
+# ln -sf /data/extensions /opt/flarum/extensions
+# ln -sf /data/storage /opt/flarum/storage
+# chown -h flarum:flarum /opt/flarum/extensions /opt/flarum/public/assets /opt/flarum/storage
+# fixperms /data/assets /data/extensions /data/storage /opt/flarum/vendor
+
+mkdir -p /opt/flarum/public/assets /opt/flarum/storage /opt/flarum/extensions
+fixperms /opt/flarum/public/assets /opt/flarum/storage /opt/flarum/extensions /opt/flarum/vendor
 
 echo "Checking parameters..."
 if [ -z "$FLARUM_BASE_URL" ]; then
