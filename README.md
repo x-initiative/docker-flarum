@@ -27,6 +27,7 @@ ___
   * [General](#general)
   * [Flarum](#flarum)
   * [Database](#database)
+  * [FoF S3 Assets (optional)](#fof-s3-assets-optional)
 * [Volumes](#volumes)
 * [Ports](#ports)
 * [Usage](#usage)
@@ -122,6 +123,33 @@ linux/arm64
 > `DB_USER_FILE` and `DB_PASSWORD_FILE` can be used to fill in the value from a
 > file, especially for Docker's secrets feature.
 
+### FoF S3 Assets (optional)
+
+The image includes [`fof/s3-assets`](https://github.com/FriendsOfFlarum/s3-assets) so avatars, covers and other Flarum disks can live in an **S3 or S3-compatible** bucket (AWS, MinIO, Clever Cloud Cellar, etc.).
+
+* Set the variables **before the first start** (or re-create the container) if you use env-based config: they **override** the values in the Flarum admin.
+* If `FOF_S3_BUCKET` is set, the boot script sets **PHP-FPM `clear_env = no`** for this process only, so `getenv('FOF_S3_*')` works inside Flarum. If you do not use S3 via env, leave `FOF_S3_BUCKET` unset; you can still configure the extension in the admin UI only (no need to change `clear_env`).
+
+| Variable | Description |
+|----------|-------------|
+| `FOF_S3_ACCESS_KEY_ID` | Access key (required for AWS-style setup via env) |
+| `FOF_S3_SECRET_ACCESS_KEY` | Secret (required) |
+| `FOF_S3_REGION` | Region (required) |
+| `FOF_S3_BUCKET` | Bucket name (required). When set, the `fof-s3-assets` extension is **enabled** automatically at startup. |
+| `FOF_S3_URL` | Public base URL for the bucket (e.g. CDN or virtual-host URL) |
+| `FOF_S3_ENDPOINT` | S3 API endpoint (required for many S3-compatible services) |
+| `FOF_S3_ACL` | Optional [canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl) for uploaded objects |
+| `FOF_S3_PATH_STYLE_ENDPOINT` | `true` / `1` if the provider needs path-style URLs (common with custom endpoints) |
+| `FOF_S3_CACHE_CONTROL` | Optional `max-age` in seconds for served files |
+
+After the bucket is configured, copy **existing** files from disk to the bucket (optional `--move` deletes the local copy after a successful upload):
+
+`docker compose exec flarum gosu flarum:flarum php flarum fof:s3:copy`  
+`docker compose exec flarum gosu flarum:flarum php flarum fof:s3:copy --move`
+
+> [!NOTE]
+> [**FoF Upload**](https://github.com/FriendsOfFlarum/upload) attachments are configured separately; see the [FoF Upload S3 / AWS wiki](https://github.com/FriendsOfFlarum/upload/wiki/AWS-S3) if you also want message uploads on the same bucket.
+
 ## Volumes
 
 * `/data`: Contains assets, extensions and storage
@@ -133,7 +161,7 @@ linux/arm64
 
 ## Ports
 
-* `8000`: HTTP port
+* `8080`: HTTP port (Nginx; map it as needed in Clever Cloud / your orchestrator)
 
 ## Usage
 

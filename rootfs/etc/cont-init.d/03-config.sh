@@ -75,6 +75,14 @@ sed -e "s/@MEMORY_LIMIT@/$MEMORY_LIMIT/g" \
   -e "s/@CLEAR_ENV@/$CLEAR_ENV/g" \
   /tpls/etc/php83/php-fpm.d/www.conf >/etc/php83/php-fpm.d/www.conf
 
+# FriendsOfFlarum s3-assets: credentials come from FOF_S3_*; PHP must see them (getenv) in FPM workers.
+# When the bucket is set, force clear_env=no; otherwise fof-s3-assets cannot read the env vars.
+if [ -n "${FOF_S3_BUCKET:-}" ]; then
+  echo "FoF S3 Assets: FOF_S3_BUCKET is set, setting PHP-FPM clear_env = no (required for S3 env configuration)"
+  sed -i 's/^clear_env = yes/clear_env = no/' /etc/php83/php-fpm.d/www.conf
+  sed -i 's/^clear_env = on/clear_env = off/' /etc/php83/php-fpm.d/www.conf
+fi
+
 echo "Setting PHP INI configuration..."
 sed -i "s|memory_limit.*|memory_limit = ${MEMORY_LIMIT}|g" /etc/php83/php.ini
 sed -i "s|;date\.timezone.*|date\.timezone = ${TZ}|g" /etc/php83/php.ini
@@ -233,4 +241,10 @@ if [ -s "/data/extensions/list" ]; then
 fi
 
 gosu flarum:flarum php flarum migrate
+
+# Enable FoF S3 Assets when the bucket is configured via env (extension is bundled in the image)
+if [ -n "${FOF_S3_BUCKET:-}" ]; then
+  gosu flarum:flarum php flarum extension enable fof-s3-assets 2>/dev/null || true
+fi
+
 gosu flarum:flarum php flarum cache:clear
