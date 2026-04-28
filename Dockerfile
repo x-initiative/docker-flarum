@@ -57,7 +57,7 @@ RUN mkdir -p /opt/flarum \
   && curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer \
   && COMPOSER_CACHE_DIR="/tmp" composer create-project flarum/flarum /opt/flarum --no-install --no-audit \
   && composer config --working-dir /opt/flarum audit.block-insecure false \
-  && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload fof/oauth blt950/oauth-generic fof/s3-assets:1.0.0-beta.4 --no-audit \
+  && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload fof/oauth blt950/oauth-generic "blomstra/s3-assets:^0.1.3-beta.3" --no-audit \
   && find /opt/flarum/vendor -name "*.woff2" \
   && mkdir -p /opt/flarum/public/assets/fonts \
   && find /opt/flarum/vendor -name "*.woff2" -exec cp {} /opt/flarum/public/assets/fonts/ \; \

@@ -27,7 +27,7 @@ ___
   * [General](#general)
   * [Flarum](#flarum)
   * [Database](#database)
-  * [FoF S3 Assets (optional)](#fof-s3-assets-optional)
+  * [Blomstra S3 Assets + Clever Cellar (optional)](#blomstra-s3-assets--clever-cellar-optional)
 * [Volumes](#volumes)
 * [Ports](#ports)
 * [Usage](#usage)
@@ -123,32 +123,44 @@ linux/arm64
 > `DB_USER_FILE` and `DB_PASSWORD_FILE` can be used to fill in the value from a
 > file, especially for Docker's secrets feature.
 
-### FoF S3 Assets (optional)
+### Blomstra S3 Assets + Clever Cellar (optional)
 
-The image includes [`fof/s3-assets`](https://github.com/FriendsOfFlarum/s3-assets) so avatars, covers and other Flarum disks can live in an **S3 or S3-compatible** bucket (AWS, MinIO, Clever Cloud Cellar, etc.).
+The image includes [`blomstra/s3-assets`](https://github.com/blomstra/flarum-ext-s3-assets) so avatars, covers and Flarum disks can live in an **S3-compatible** bucket (Clever Cloud **Cellar**, AWS, MinIO, etc.).  
+La licence du paquet est **proprietary** — vérifie les conditions sur [Packagist](https://packagist.org/packages/blomstra/s3-assets) / Blomstra avant usage en production.
 
-* Set the variables **before the first start** (or re-create the container) if you use env-based config: they **override** the values in the Flarum admin.
-* If `FOF_S3_BUCKET` is set, the boot script sets **PHP-FPM `clear_env = no`** for this process only, so `getenv('FOF_S3_*')` works inside Flarum. If you do not use S3 via env, leave `FOF_S3_BUCKET` unset; you can still configure the extension in the admin UI only (no need to change `clear_env`).
+Configuration via variables d’environnement **style Laravel / AWS SDK** (pas les anciennes `FOF_S3_*`). Référence Blomstra : [`src/Driver/Config.php`](https://github.com/blomstra/flarum-ext-s3-assets/blob/master/src/Driver/Config.php).
 
-| Variable | Description |
-|----------|-------------|
-| `FOF_S3_ACCESS_KEY_ID` | Access key (required for AWS-style setup via env) |
-| `FOF_S3_SECRET_ACCESS_KEY` | Secret (required) |
-| `FOF_S3_REGION` | Region (required) |
-| `FOF_S3_BUCKET` | Bucket name (required). When set, the `fof-s3-assets` extension is **enabled** automatically at startup. |
-| `FOF_S3_URL` | Public base URL for the bucket (e.g. CDN or virtual-host URL) |
-| `FOF_S3_ENDPOINT` | S3 API endpoint (required for many S3-compatible services) |
-| `FOF_S3_ACL` | Optional [canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/userguide/acl-overview.html#canned-acl) for uploaded objects |
-| `FOF_S3_PATH_STYLE_ENDPOINT` | `true` / `1` if the provider needs path-style URLs (common with custom endpoints) |
-| `FOF_S3_CACHE_CONTROL` | Optional `max-age` in seconds for served files |
+#### Clever Cloud Cellar
 
-After the bucket is configured, copy **existing** files from disk to the bucket (optional `--move` deletes the local copy after a successful upload):
+1. Crée un add-on **Cellar** et un **bucket** (sans `_` dans le nom) dans la console Clever ([doc Cellar](https://www.clever-cloud.com/developers/doc/addons/cellar/)).
+2. Récupère les identifiants (ou utilise les variables injectées si l’add-on est lié à l’application : `CELLAR_ADDON_KEY_ID`, `CELLAR_ADDON_KEY_SECRET`, `CELLAR_ADDON_HOST`).
+3. Dans l’application Flarum (Docker), définis les variables ci-dessous. Pour Cellar, l’endpoint API est en général **`https://cellar-c2.services.clever-cloud.com`** (vérifie dans la doc / console si ta région utilise un autre host).
 
-`docker compose exec flarum gosu flarum:flarum php flarum fof:s3:copy`  
-`docker compose exec flarum gosu flarum:flarum php flarum fof:s3:copy --move`
+| Variable | Obligatoire | Exemple Cellar / notes |
+|----------|-------------|-------------------------|
+| `AWS_ACCESS_KEY_ID` | oui | Clé d’accès Cellar (= `CELLAR_ADDON_KEY_ID` si add-on lié) |
+| `AWS_SECRET_ACCESS_KEY` | oui | Secret Cellar (= `CELLAR_ADDON_KEY_SECRET`) |
+| `AWS_DEFAULT_REGION` | oui | Les SDK exigent une valeur ; avec un endpoint custom, utilise souvent la valeur littérale **`default`** (voir doc Clever pour les SDK). |
+| `AWS_BUCKET` | oui | Nom du bucket. **Si défini**, le script de démarrage active **`blomstra-s3-assets`** et force **`clear_env=no`** en PHP-FPM pour que `getenv()` voie les clés. |
+| `AWS_ENDPOINT` | oui | **`https://cellar-c2.services.clever-cloud.com`** (URL complète ; le validateur Blomstra exige une URL valide). |
+| `AWS_URL` | oui * | URL publique de base pour servir les fichiers. Souvent **`https://<nom-du-bucket>.cellar-c2.services.clever-cloud.com`** (voir doc Cellar). Si absent, le code peut dériver une URL AWS standard (inadaptée à Cellar). |
+| `AWS_PATH_STYLE_ENDPOINT` | oui | **`true`** ou **`1`** pour Cellar (path-style), comme pour Active Storage / boto dans la doc Clever. |
+| `AWS_ACL` | oui * | Ex. **`public-read`** pour que avatars / assets publics soient lisibles en HTTP ; sinon configure une politique de bucket côté Cellar. |
+
+\* Le validateur Blomstra exige notamment `url`, `endpoint`, `ACL` : renseigne `AWS_URL` et `AWS_ACL` explicitement pour éviter une config invalide.
+
+Après configuration, pour copier les fichiers déjà présents sur le disque vers le bucket puis régénérer les assets :
+
+`docker compose exec flarum gosu flarum:flarum php flarum s3:move`
+
+([Commande `s3:move`](https://github.com/blomstra/flarum-ext-s3-assets/blob/master/src/Console/MoveAssetsCommand.php) côté Blomstra — pas `fof:s3:copy`.)
 
 > [!NOTE]
-> [**FoF Upload**](https://github.com/FriendsOfFlarum/upload) attachments are configured separately; see the [FoF Upload S3 / AWS wiki](https://github.com/FriendsOfFlarum/upload/wiki/AWS-S3) if you also want message uploads on the same bucket.
+> [**FoF Upload**](https://github.com/FriendsOfFlarum/upload) pour les pièces jointes est distinct ; Blomstra peut partager la config avec FoF Upload (`fof-upload.*` dans les réglages). Pour ne pas utiliser S3 via env, laisse **`AWS_BUCKET`** vide et configure l’extension dans l’admin (sans changer `clear_env` si tout passe par l’UI).
+
+#### Pourquoi ne plus utiliser `fof/s3-assets` ?
+
+L’extension FoF en beta affichait des bugs de traductions ([issue #8](https://github.com/FriendsOfFlarum/s3-assets/issues/8)). Blomstra est utilisée à la place dans cette image.
 
 ## Volumes
 
