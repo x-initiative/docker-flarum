@@ -117,14 +117,17 @@ echo "Initializing files and folders..."
 # fixperms /data/assets /data/extensions /data/storage /opt/flarum/vendor
 
 mkdir -p /opt/flarum/public/assets /opt/flarum/storage /opt/flarum/extensions
-echo "Checking assets in /opt/flarum/public/assets..."
-ls -R /opt/flarum/public/assets
-# Restore assets from backup if directory is empty (happens if volume mount or script wiped it)
+# Only restore **bundled fonts** from the image backup (build-time copy of vendor .woff2).
+# Do not overwrite published JS/CSS/locale bundles under public/assets — those come from
+# `php flarum assets:publish` (and from S3 when Blomstra S3 Assets is active).
 if [ ! -f "/opt/flarum/public/assets/fonts/fa-solid-900.woff2" ]; then
-  echo "Restoring assets from backup..."
-  ls -R /opt/flarum/public/assets.bak
-  cp -a /opt/flarum/public/assets.bak/* /opt/flarum/public/assets/ 2>/dev/null || true
-  ls -R /opt/flarum/public/assets
+  echo "Restoring bundled fonts from image backup into public/assets/fonts..."
+  mkdir -p /opt/flarum/public/assets/fonts
+  if [ -d "/opt/flarum/public/assets.bak/fonts" ]; then
+    cp -a /opt/flarum/public/assets.bak/fonts/. /opt/flarum/public/assets/fonts/ 2>/dev/null || true
+  else
+    echo >&2 "WARNING: /opt/flarum/public/assets.bak/fonts missing; Font Awesome fonts may be absent until assets are published."
+  fi
 fi
 fixperms /opt/flarum/public/assets /opt/flarum/storage /opt/flarum/extensions /opt/flarum/vendor
 
@@ -187,7 +190,6 @@ settings:
   forum_title: ${FLARUM_FORUM_TITLE}
 EOL
   gosu flarum:flarum php flarum install --file=/tmp/config.yml
-  gosu flarum:flarum touch /data/assets/rev-manifest.json
   echo ">>"
   echo ">> WARNING: Flarum has been installed with the default credentials (flarum/flarum)"
   echo ">> Please connect to ${FLARUM_BASE_URL} and change them!"

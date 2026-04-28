@@ -162,9 +162,21 @@ Après configuration, pour copier les fichiers déjà présents sur le disque ve
 
 L’extension FoF en beta affichait des bugs de traductions ([issue #8](https://github.com/FriendsOfFlarum/s3-assets/issues/8)). Blomstra est utilisée à la place dans cette image.
 
+#### Traductions affichées comme clés brutes (`core.admin…`)
+
+- **Avec Blomstra + Cellar**, les JS compilés (dont les fichiers de langue admin) sont en principe **servis depuis l’URL publique du bucket** (`AWS_URL`), pas depuis Nginx. Un bucket privé, une **ACL** trop restrictive, ou une **`AWS_URL`** / endpoint incorrect peut produire des bundles invalides ou obsolètes → les clés ne sont pas résolues, **sans erreur visible** sur la page d’accueil du forum (la page HTML répond souvent 200).
+- Le script d’entrée ne restaure plus tout `public/assets` depuis la sauvegarde d’image : uniquement **`fonts/`** si les Font Awesome manquent (éviter d’écraser des bundles déjà publiés).
+- **Corrigé** : suppression du `touch /data/assets/rev-manifest.json` à l’install (chemin obsolète quand les assets ne sont plus sous `/data`).
+
+Après changement d’extensions ou de config S3 :
+
+`docker compose exec flarum gosu flarum:flarum php flarum assets:publish && docker compose exec flarum gosu flarum:flarum php flarum cache:clear`
+
+Vérifie dans le navigateur (**Réseau**) que les requêtes vers les `*.js` sous ton **`AWS_URL`** renvoient bien du JavaScript (taille > 0), pas une page d’erreur XML Cellar ou un corps vide.
+
 ## Volumes
 
-* `/data`: Contains assets, extensions and storage
+* `/data`: optionnel — liste d’extensions additionnelles (`/data/extensions/list`) et cache Composer associé ; les assets du forum sont sous `/opt/flarum/public/assets` dans l’image (ou sur **S3** si Blomstra est configuré).
 
 > [!WARNING]
 > Note that the volume should be owned by the user/group with the specified
