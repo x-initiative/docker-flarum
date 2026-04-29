@@ -62,6 +62,17 @@ docker buildx bake
 docker buildx bake image-all
 ```
 
+Build-args for **FoF OAuth Generic** (fork baked via `git clone` + Composer `path` repo, avoids conflicting with Packagist):
+
+| Arg | Default |
+|-----|---------|
+| `OAUTH_GENERIC_REPO` | `https://github.com/jeromedoucet/flarum-ext-oauth-generic.git` |
+| `OAUTH_GENERIC_REF` | `main` |
+
+```shell
+docker build --build-arg OAUTH_GENERIC_REF=main -t flarum:local .
+```
+
 ## Image
 
 | Registry                                                                                          | Image                      |

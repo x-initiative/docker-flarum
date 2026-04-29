@@ -2,6 +2,9 @@
 
 ARG FLARUM_VERSION=v1.8.11
 ARG ALPINE_VERSION=3.22
+# FoF OAuth generic: fork (username suggestion, etc.). Path repo avoids Packagist vs VCS ambiguity for blt950/oauth-generic.
+ARG OAUTH_GENERIC_REPO=https://github.com/jeromedoucet/flarum-ext-oauth-generic.git
+ARG OAUTH_GENERIC_REF=main
 
 FROM tianon/gosu:latest AS gosu
 
@@ -10,6 +13,7 @@ COPY --from=gosu /gosu /usr/local/bin/
 RUN apk --update --no-cache add \
     bash \
     curl \
+    git \
     libgd \
     mysql-client \
     mariadb-connector-c \
@@ -53,11 +57,16 @@ ENV S6_BEHAVIOUR_IF_STAGE2_FAILS="2"\
   PGID="1000"
 
 ARG FLARUM_VERSION
+ARG OAUTH_GENERIC_REPO
+ARG OAUTH_GENERIC_REF
 RUN mkdir -p /opt/flarum \
   && curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer \
   && COMPOSER_CACHE_DIR="/tmp" composer create-project flarum/flarum /opt/flarum --no-install --no-audit \
   && composer config --working-dir /opt/flarum audit.block-insecure false \
-  && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload fof/oauth blt950/oauth-generic "blomstra/s3-assets:^0.1.3-beta.3" --no-audit \
+  && git clone --depth 1 -b "${OAUTH_GENERIC_REF}" "${OAUTH_GENERIC_REPO}" /tmp/oauth-generic-fork \
+  && composer config --working-dir /opt/flarum repositories.oauth-generic-fork '{"type":"path","url":"/tmp/oauth-generic-fork","options":{"symlink":false}}' \
+  && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload fof/oauth "blt950/oauth-generic:@dev" "blomstra/s3-assets:^0.1.3-beta.3" --no-audit \
+  && rm -rf /tmp/oauth-generic-fork \
   && find /opt/flarum/vendor -name "*.woff2" \
   && mkdir -p /opt/flarum/public/assets/fonts \
   && find /opt/flarum/vendor -name "*.woff2" -exec cp {} /opt/flarum/public/assets/fonts/ \; \
