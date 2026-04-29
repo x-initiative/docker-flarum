@@ -65,7 +65,7 @@ RUN mkdir -p /opt/flarum \
   && composer config --working-dir /opt/flarum audit.block-insecure false \
   && git clone --depth 1 -b "${OAUTH_GENERIC_REF}" "${OAUTH_GENERIC_REPO}" /tmp/oauth-generic-fork \
   && composer config --working-dir /opt/flarum repositories.oauth-generic-fork '{"type":"path","url":"/tmp/oauth-generic-fork","options":{"symlink":false}}' \
-  && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload fof/oauth "blt950/oauth-generic:@dev" "blomstra/s3-assets:^0.1.3-beta.3" --no-audit \
+  && COMPOSER_CACHE_DIR="/tmp" composer require --working-dir /opt/flarum flarum/core:${FLARUM_VERSION} fof/upload fof/oauth "blt950/oauth-generic:^2.0" "blomstra/s3-assets:^0.1.3-beta.3" --no-audit \
   && rm -rf /tmp/oauth-generic-fork \
   && find /opt/flarum/vendor -name "*.woff2" \
   && mkdir -p /opt/flarum/public/assets/fonts \

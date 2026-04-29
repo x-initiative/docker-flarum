@@ -62,7 +62,7 @@ docker buildx bake
 docker buildx bake image-all
 ```
 
-Build-args for **FoF OAuth Generic** (fork baked via `git clone` + Composer `path` repo, avoids conflicting with Packagist):
+Build-args for **FoF OAuth Generic** (fork baked via `git clone` + Composer `path` repo). The extension is required as **`blt950/oauth-generic:^2.0`**: only your fork ships `2.x` today, so Composer cannot silently fall back to Packagist `1.x`.
 
 | Arg | Default |
 |-----|---------|
